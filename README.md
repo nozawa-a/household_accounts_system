@@ -91,3 +91,5 @@ date,type,category,amount,memo
 - カテゴリ別の集計
 - データ編集機能
 - テストコードの追加
+
+test
