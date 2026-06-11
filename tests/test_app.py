@@ -39,7 +39,7 @@ class HouseholdAccountsAppTest(unittest.TestCase):
     def test_amount_must_be_positive_number(self):
         with tempfile.TemporaryDirectory() as workdir:
             result = self.run_app(
-                "1\n2026-06-11\n給料\n-100\nabc\n100\nメモ\n3\n8\n",
+                "1\n2026-06-11\n給料\n-100\nabc\n100\nメモ\n\n3\n8\n",
                 workdir,
             )
 
@@ -102,18 +102,33 @@ class HouseholdAccountsAppTest(unittest.TestCase):
             )
 
             result = self.run_app(
-                "6\n1\n2026-06-02\n交通費\n1500\n電車\n3\n8\n",
+                "6\n1\n2026-06-02\n交通費\n1500\n電車\n\n3\n8\n",
                 workdir,
             )
             records = self.read_records(workdir)
 
         self.assertIn("更新しました。", result.stdout)
-        self.assertIn("2026-06-02 | 支出 | 交通費 | 1500円 | 電車", result.stdout)
+        self.assertIn(
+            "日付: 2026-06-02 | 種別: 支出 | カテゴリ: 交通費 | "
+            "金額: 1500円 | メモ: 電車",
+            result.stdout,
+        )
         self.assertEqual(records[0]["date"], "2026-06-02")
         self.assertEqual(records[0]["category"], "交通費")
         self.assertEqual(records[0]["amount"], "1500")
         self.assertEqual(records[0]["memo"], "電車")
         self.assertEqual(records[0]["created_at"], "2026-06-11 10:00:00")
+
+    def test_multi_line_memo_is_saved(self):
+        with tempfile.TemporaryDirectory() as workdir:
+            result = self.run_app(
+                "1\n2026-06-11\n給料\n200000\n1行目のメモ\n2行目のメモ\n\n3\n8\n",
+                workdir,
+            )
+            records = self.read_records(workdir)
+
+        self.assertIn("1行目のメモ / 2行目のメモ", result.stdout)
+        self.assertEqual(records[0]["memo"], "1行目のメモ\n2行目のメモ")
 
 
 if __name__ == "__main__":

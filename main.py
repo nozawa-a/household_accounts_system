@@ -3,6 +3,11 @@ import os
 import re
 from datetime import datetime
 
+try:
+    import readline
+except ImportError:
+    pass
+
 FILE_NAME = "records.csv"
 BACK_COMMAND = "0"
 
@@ -23,6 +28,54 @@ def input_with_back(prompt):
         return None
 
     return value
+
+
+def format_memo_for_display(memo):
+    """一覧表示用にメモ内の改行を整える"""
+    return memo.replace("\n", " / ")
+
+
+def show_memo_preview(memo):
+    """保存されるメモの内容を表示する"""
+    memo_display = format_memo_for_display(memo)
+
+    if memo_display:
+        print(f"保存されるメモ: {memo_display}")
+    else:
+        print("保存されるメモ: （空欄）")
+
+
+def input_memo(current_memo=None):
+    """複数行のメモを入力する"""
+    lines = []
+
+    if current_memo is None:
+        print(f"メモを入力してください（空行で終了、{BACK_COMMAND}でメニューに戻る）")
+    else:
+        current_memo_display = format_memo_for_display(current_memo)
+        print(
+            "メモを入力してください"
+            f"（現在: {current_memo_display}、空行のみで変更なし、"
+            f"{BACK_COMMAND}でメニューに戻る）"
+        )
+
+    while True:
+        line = input("> ")
+
+        if not lines and line == BACK_COMMAND:
+            print("メニューに戻ります。")
+            return None
+
+        if line == "":
+            if current_memo is not None and not lines:
+                show_memo_preview(current_memo)
+                return current_memo
+
+            memo = "\n".join(lines)
+            show_memo_preview(memo)
+            return memo
+
+        lines.append(line)
 
 
 def input_date():
@@ -167,7 +220,7 @@ def add_record(record_type):
     if amount is None:
         return
 
-    memo = input_with_back("メモを入力してください")
+    memo = input_memo()
 
     if memo is None:
         return
@@ -200,11 +253,11 @@ def show_records():
             record_type = "支出"
 
         print(
-            f"{i}. {record['date']} | "
-            f"{record_type} | "
-            f"{record['category']} | "
-            f"{record['amount']}円 | "
-            f"{record['memo']} | "
+            f"{i}. 日付: {record['date']} | "
+            f"種別: {record_type} | "
+            f"カテゴリ: {record['category']} | "
+            f"金額: {record['amount']}円 | "
+            f"メモ: {format_memo_for_display(record['memo'])} | "
             f"登録日時: {record.get('created_at', '')}"
         )
 
@@ -330,12 +383,10 @@ def edit_record():
     if amount is None:
         return
 
-    memo = input_with_back(f"メモを入力してください（現在: {record['memo']}、空欄で変更なし）")
+    memo = input_memo(record["memo"])
 
     if memo is None:
         return
-    if memo == "":
-        memo = record["memo"]
 
     record["date"] = date
     record["category"] = category
