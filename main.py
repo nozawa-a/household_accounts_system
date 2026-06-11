@@ -1,9 +1,39 @@
 import csv
 import os
+import re
+from datetime import datetime
 
 FILE_NAME = "records.csv"
 
 records = []
+
+
+def input_date():
+    """YYYY-MM-DD形式の日付を入力する"""
+    while True:
+        date = input("日付を入力してください 例: 2026-05-04: ")
+
+        try:
+            if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", date):
+                raise ValueError
+            datetime.strptime(date, "%Y-%m-%d")
+            return date
+        except ValueError:
+            print("日付はYYYY-MM-DD形式で入力してください。")
+
+
+def input_month():
+    """YYYY-MM形式の年月を入力する"""
+    while True:
+        month = input("集計したい年月を入力してください 例: 2026-05: ")
+
+        try:
+            if not re.fullmatch(r"\d{4}-\d{2}", month):
+                raise ValueError
+            datetime.strptime(month, "%Y-%m")
+            return month
+        except ValueError:
+            print("年月はYYYY-MM形式で入力してください。")
 
 
 def load_records():
@@ -33,7 +63,7 @@ def save_records():
 
 def add_record(record_type):
     """収入または支出を登録する"""
-    date = input("日付を入力してください 例: 2026-05-04: ")
+    date = input_date()
     category = input("カテゴリを入力してください 例: 食費, 給料, 交通費: ")
 
     while True:
@@ -78,13 +108,15 @@ def show_records():
             f"{record['amount']}円 | "
             f"{record['memo']}"
         )
+
+
 def show_monthly_summary():
     """指定した月の収入・支出・収支を表示する"""
     if not records:
         print("データがありません。")
         return
 
-    target_month = input("集計したい年月を入力してください 例: 2026-05: ")
+    target_month = input_month()
 
     income_total = 0
     expense_total = 0
@@ -103,6 +135,7 @@ def show_monthly_summary():
     print(f"収入合計: {income_total:,}円")
     print(f"支出合計: {expense_total:,}円")
     print(f"収支: {balance:,}円")
+
 
 def delete_record():
     """登録データを削除する"""
